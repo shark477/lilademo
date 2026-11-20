@@ -1,0 +1,249 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Player Journey Explorer</title>
+<style>
+:root{--bg:#f4f5f7;--p:#fff;--t:#1b1f27;--m:#667085;--b:#d8dce3;--a:#0e7490;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1218;--p:#1a1f29;--t:#e6e9ef;--m:#98a2b3;--b:#2c3340;--a:#22d3ee;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1218;--p:#1a1f29;--t:#e6e9ef;--m:#98a2b3;--b:#2c3340;--a:#22d3ee;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--t);font:14px/1.4 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+#app{display:flex;height:100%;gap:12px;padding:12px}
+aside{width:300px;flex:none;background:var(--p);border:1px solid var(--b);border-radius:12px;padding:14px;overflow:auto}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+h1{font-size:16px;margin:0 0 2px}h2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m);margin:16px 0 6px}
+.sub{color:var(--m);font-size:12px}
+select,button,input[type=range]{width:100%;font:inherit;color:var(--t)}
+select{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:7px;margin-bottom:6px}
+button{background:var(--a);color:#fff;border:0;border-radius:8px;padding:8px;cursor:pointer;font-weight:600}
+button.g{background:var(--bg);color:var(--t);border:1px solid var(--b)}
+.row{display:flex;gap:6px}label.c{display:flex;align-items:center;gap:6px;margin:3px 0;cursor:pointer}
+.sw{width:12px;height:12px;border-radius:50%;display:inline-block}.ic{width:20px;height:20px;flex:none}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:var(--p);border:1px solid var(--b);border-radius:12px;padding:8px}
+canvas{max-width:100%;max-height:100%;aspect-ratio:1;border-radius:8px;background:#000}
+#bar{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+#bar button{width:76px}#bar select{width:80px;margin:0}#tl{font-variant-numeric:tabular-nums;min-width:90px;text-align:right}
+#st{font-size:12px;color:var(--m);margin-top:6px;white-space:pre-line}
+canvas{min-width:0}#rp{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}#rp.on{display:flex}#rc{background:var(--p);border:1px solid var(--b);border-radius:12px;max-width:780px;width:100%;max-height:90vh;display:flex;flex-direction:column;padding:14px;gap:10px}#rt{flex:1;overflow:auto;white-space:pre-wrap;font:12.5px/1.5 ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:10px;margin:0}#rc .row button{width:auto;flex:1}#stage{position:relative}#rv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;max-height:36vh;overflow:auto}#rv img{width:100%;border-radius:6px;display:block}#rv figcaption{font-size:11px;color:var(--m)}#rv figure{margin:0}#bi{position:absolute;right:14px;bottom:14px;width:auto;padding:10px 16px;box-shadow:0 2px 10px rgba(0,0,0,.35)}#stage{gap:12px}#sum{width:200px;flex:none;align-self:flex-start;display:grid;grid-template-columns:1fr 1fr;gap:8px}.tile{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:8px 10px}.tile b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.tile span{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.05em}.tile.w{grid-column:span 2}
+@media(max-width:800px){#app{flex-direction:column;height:auto}aside{width:auto}#stage{height:auto;flex-direction:column}#sum{width:100%}}
+</style></head><body><div id="app">
+<aside>
+<h1>Player Journey Explorer</h1><div class="sub">Load match parquet files, pick a match, press play.</div>
+<h2>Data</h2>
+<div class="row"><button id="bf">Add files</button><button id="bd" class="g">Add folder</button></div>
+<input id="fi" type="file" multiple hidden><input id="di" type="file" webkitdirectory multiple hidden>
+<div id="st">No data loaded.</div>
+<h2>Filter</h2>
+<select id="fm"></select><select id="fd"></select><select id="fx"></select><select id="fp" style="display:none"></select>
+<h2>Layers</h2>
+<label class="c"><input type="checkbox" id="lh" checked><svg class="ic" viewBox="0 0 20 20"><line x1="2" y1="10" x2="18" y2="10" stroke="#39ff14" stroke-width="3.5" stroke-linecap="round"/></svg>Human paths</label>
+<label class="c"><input type="checkbox" id="lb" checked><svg class="ic" viewBox="0 0 20 20"><line x1="1" y1="10" x2="19" y2="10" stroke="#ff4fd8" stroke-width="3" stroke-dasharray="4 3"/></svg>Bot paths (dashed)</label>
+<label class="c"><input type="checkbox" data-k="kill" checked><svg class="ic" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" fill="#ef4444" stroke="#fff" stroke-width="1.5"/></svg>Kills</label>
+<label class="c"><input type="checkbox" data-k="death" checked><svg class="ic" viewBox="0 0 20 20"><path d="M5 5L15 15M15 5L5 15" stroke="#fff" stroke-width="5" fill="none"/><path d="M5 5L15 15M15 5L5 15" stroke="#111" stroke-width="2.5" fill="none"/></svg>Deaths</label>
+<label class="c"><input type="checkbox" data-k="loot" checked><svg class="ic" viewBox="0 0 20 20"><polygon points="10,3 16,10 10,17 4,10" fill="#facc15" stroke="#fff" stroke-width="1.5"/></svg>Loot</label>
+<label class="c"><input type="checkbox" data-k="storm" checked><svg class="ic" viewBox="0 0 20 20"><polygon points="10,3 17,16 3,16" fill="#a855f7" stroke="#fff" stroke-width="1.5"/></svg>Storm deaths</label>
+<h2>Heatmap</h2>
+<select id="hm"><option value="">Off</option><option value="kill">Kill zones</option><option value="death">Death zones (incl. storm)</option><option value="pos" selected>Traffic</option></select>
+
+
+<h2>Assumptions</h2><div class="sub">Bots = numeric user_id (BotPosition/BotKill/BotKilled). Map X/Z used (Y = height); mapping per the dataset README. ts is read as seconds (see note below). ts column is labelled ms but holds epoch seconds, so it is read as seconds (1 s resolution). Time is relative to each match's first event. Date comes from the folder name, else the timestamp.</div>
+</aside>
+<main><div id="stage"><canvas id="cv" width="1024" height="1024"></canvas><div id="sum"></div><button id="bi">Generate insights report</button></div>
+<div id="bar"><button id="pl">▶ Play</button><select id="sp"><option value="1">1×</option><option value="5">5×</option><option value="20" selected>20×</option><option value="60">60×</option></select><input type="range" id="sl" min="0" max="1" value="0"><span id="tl">0:00</span></div></main></div>
+<div id="rp"><div id="rc"><div class="row" style="align-items:center"><b style="flex:1">Insights report</b><button class="g" id="rx" style="flex:none">Close</button></div><div id="rv"></div><pre id="rt"></pre><div class="row"><button id="ra" class="g">Add AI insights</button><button id="rpd">Download PDF</button><button id="rtx" class="g">Download insights.md</button></div><div class="sub" id="rn"></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script type="module">
+import {parquetReadObjects} from 'https://cdn.jsdelivr.net/npm/hyparquet@1.17.1/+esm';
+import {compressors} from 'https://cdn.jsdelivr.net/npm/hyparquet-compressors@1.1.1/+esm';
+const $=i=>document.getElementById(i),CFG={AmbroseValley:{s:900,ox:-370,oz:-473},GrandRift:{s:581,ox:-290,oz:-290},Lockdown:{s:1000,ox:-500,oz:-500}};
+const IMG={},SRC={AmbroseValley:'__AV__',GrandRift:'__GR__',Lockdown:'__LD__'};
+for(const k in SRC){const i=new Image();i.onload=render;i.src=SRC[k];IMG[k]=i}
+const cv=$('cv'),cx=cv.getContext('2d'),td=new TextDecoder(),M=new Map();let T=0,playing=false,last=0;
+const dec=v=>v instanceof Uint8Array?td.decode(v):String(v??'');
+const num=v=>v instanceof Date?v.getTime():typeof v==='bigint'?Number(v):Number(v);
+const cls=e=>{e=e.toLowerCase();return e.includes('storm')?'storm':e.includes('loot')?'loot':e.includes('killed')?'death':e.includes('kill')?'kill':'pos'};
+const px=(x,z,c)=>[(x-c.ox)/c.s*1024,(1-(z-c.oz)/c.s)*1024];
+async function load(files){let ok=0,bad=0,lastErr='';const st=$('st');
+ for(const f of files){if(/\.(json|md|png|jpe?g|txt|csv)$/i.test(f.name))continue;
+  try{st.textContent=`Reading ${f.name}… (${ok} ok)`;const rows=await parquetReadObjects({file:await f.arrayBuffer(),compressors});
+   const parts=(f.webkitRelativePath||'').split('/');const folder=parts.length>1?parts[parts.length-2]:'';
+   for(const r of rows){const map=Object.keys(CFG).find(k=>dec(r.map_id).replace(/\W/g,'').toLowerCase().includes(k.toLowerCase()));if(!map)continue;
+    const id=dec(r.match_id),uid=dec(r.user_id),e=dec(r.event),c=CFG[map];let m=M.get(id);
+    if(!m){m={id,map,date:folder,rows:[],t0:1/0,t1:0,u:new Set()};M.set(id,m)}
+    const t=num(r.ts);if(!m.date)m.date=new Date(t*1000).toISOString().slice(0,10);
+    const [X,Y]=px(Number(r.x),Number(r.z),c);m.rows.push({u:uid,bot:/^\d+$/.test(uid)||e==='BotPosition',k:cls(e),e,X,Y,r:t,t});
+    m.t0=Math.min(m.t0,t);m.u.add(uid)}ok++}catch(err){bad++;lastErr=f.name.slice(0,14)+': '+(err.message||err);console.warn(f.name,err)}}
+ for(const m of M.values()){m.paths=new Map();m.t1=0;for(const r of m.rows){r.t=(r.r-m.t0)*1000;m.t1=Math.max(m.t1,r.t)}
+  m.rows.sort((a,b)=>a.t-b.t);m.paths.clear();for(const r of m.rows)if(r.k==='pos'){let p=m.paths.get(r.u);if(!p)m.paths.set(r.u,p={bot:r.bot,pts:[]});p.pts.push(r)}}
+ st.textContent=`${ok} files read${bad?`, ${bad} failed (${lastErr})`:''} · ${M.size} matches`;fill()}
+const uniq=a=>[...new Set(a)].sort();
+function fill(){const keep=(id,v,opts)=>{const s=$(id),o=s.value;s.innerHTML=opts;if([...s.options].some(x=>x.value===o))s.value=o};
+ keep('fm','',uniq([...M.values()].map(m=>m.map)).map(x=>`<option>${x}</option>`).join(''));
+ const ms=[...M.values()].filter(m=>m.map===$('fm').value);
+ keep('fd','',`<option value="">All dates</option>`+uniq(ms.map(m=>m.date)).map(x=>`<option>${x}</option>`).join(''));
+ const d=$('fd').value,l=ms.filter(m=>!d||m.date===d);
+ keep('fx','',`<option value="">All matches (aggregate)</option>`+l.map(m=>`<option value="${m.id}">${m.id.slice(0,8)} · ${[...m.u].filter(u=>!/^\d+$/.test(u)).length}H/${[...m.u].filter(u=>/^\d+$/.test(u)).length}B</option>`).join(''));
+ sync()}
+const cur=()=>{const x=$('fx').value;if(x)return[M.get(x)];const d=$('fd').value;return[...M.values()].filter(m=>m.map===$('fm').value&&(!d||m.date===d))};
+function sync(){const x=$('fx').value,m=x&&M.get(x);const fp=$('fp'),po=fp.value;fp.style.display=m?'':'none';fp.innerHTML=m?'<option value="">All players</option>'+[...m.u].map(u=>`<option value="${u}">${/^\d+$/.test(u)?'Bot':'Human'} ${u.slice(0,8)}</option>`).join(''):'';if(m&&[...fp.options].some(z=>z.value===po))fp.value=po;$('sl').disabled=$('pl').disabled=!m;$('sl').max=m?m.t1:1;T=m?Math.min(T,m.t1):0;$('sl').value=T;if(!m)playing=false;render()}
+const on=k=>document.querySelector(`[data-k=${k}]`).checked;
+function heat(rows,mode){const o=document.createElement('canvas');o.width=o.height=512;const c=o.getContext('2d'),tr=mode==='pos';
+ c.globalCompositeOperation='lighter';for(const r of rows){if(mode==='death'?(r.k!=='death'&&r.k!=='storm'):r.k!==mode)continue;
+  const x=r.X/2,y=r.Y/2,R=tr?9:16,g=c.createRadialGradient(x,y,0,x,y,R);const a=tr?.05:.3;g.addColorStop(0,`rgba(255,255,255,${a})`);g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(x-R,y-R,2*R,2*R)}
+ const d=c.getImageData(0,0,512,512),p=d.data;for(let i=0;i<p.length;i+=4){const a=p[i]/255;if(!a){p[i+3]=0;continue}
+  const h=(1-Math.min(a,1))*240;const[r,g,b]=hsl(h);p[i]=r;p[i+1]=g;p[i+2]=b;p[i+3]=Math.min(255,a*420)}
+ c.putImageData(d,0,0);c.globalCompositeOperation='source-over';cx.globalAlpha=.8;cx.imageSmoothingEnabled=true;cx.drawImage(o,0,0,1024,1024);cx.globalAlpha=1}
+function hsl(h){const f=n=>{const k=(n+h/30)%12;return Math.round(255*(.5-.5*Math.max(-1,Math.min(k-3,9-k,1))))};return[f(0),f(8),f(4)]}
+function mark(k,x,y){cx.lineWidth=2.5;cx.strokeStyle='#fff';cx.fillStyle={kill:'#ef4444',loot:'#facc15',storm:'#a855f7',death:'#111'}[k];cx.beginPath();
+ if(k==='kill')cx.arc(x,y,7,0,7);else if(k==='loot'){cx.moveTo(x,y-7);cx.lineTo(x+6,y);cx.lineTo(x,y+7);cx.lineTo(x-6,y);cx.closePath()}
+ else if(k==='storm'){cx.moveTo(x,y-8);cx.lineTo(x+8,y+6);cx.lineTo(x-8,y+6);cx.closePath()}
+ else{cx.moveTo(x-6,y-6);cx.lineTo(x+6,y+6);cx.moveTo(x+6,y-6);cx.lineTo(x-6,y+6);cx.lineWidth=5;cx.strokeStyle='#fff';cx.stroke();cx.lineWidth=2.5;cx.strokeStyle='#111';cx.stroke();return}
+ if(k!=='death'){cx.fill();cx.stroke()}}
+function render(){cx.clearRect(0,0,1024,1024);const ms=cur();if(!ms.length||!ms[0]){$('sum').innerHTML='';return}
+ const one=!!$('fx').value,lim=one?T:1/0,sel=one?$('fp').value:'';cx.drawImage(IMG[ms[0].map],0,0,1024,1024);cx.fillStyle='rgba(0,0,0,.25)';cx.fillRect(0,0,1024,1024);
+ const rows=[];for(const m of ms)for(const r of m.rows)if(r.t<=lim&&(!sel||r.u===sel))rows.push(r);
+ const hm=$('hm').value;if(hm)heat(rows,hm);
+ if(one){const m=ms[0];for(const [pid,p] of m.paths){if(p.bot?!$('lb').checked:!$('lh').checked)continue;cx.globalAlpha=sel&&pid!==sel?.15:1;
+  const pts=p.pts.filter(r=>r.t<=lim);if(!pts.length)continue;cx.beginPath();cx.setLineDash(p.bot?[6,4]:[]);cx.lineWidth=p.bot?2:2.6;cx.strokeStyle=p.bot?'#ff4fd8':'#39ff14';
+  pts.forEach((r,i)=>i?cx.lineTo(r.X,r.Y):cx.moveTo(r.X,r.Y));{cx.save();cx.strokeStyle='rgba(0,0,0,.65)';cx.lineWidth=p.bot?4.5:5.5;cx.setLineDash([]);cx.stroke();cx.restore()}cx.stroke();cx.setLineDash([]);const e=pts[pts.length-1];
+  cx.beginPath();cx.arc(e.X,e.Y,p.bot?4:5,0,7);cx.fillStyle=p.bot?'#ff4fd8':'#39ff14';cx.fill();if(!p.bot){cx.lineWidth=2;cx.strokeStyle='#fff';cx.stroke()}}}
+ cx.globalAlpha=1;const n={kill:0,death:0,loot:0,storm:0};for(const r of rows)if(r.k!=='pos'){n[r.k]++;if(on(r.k))mark(r.k,r.X,r.Y)}
+ if(one){const L=['Player  '+(sel||'All players'),'Match   '+ms[0].id];cx.font='600 14px ui-monospace,Menlo,monospace';cx.textAlign='left';const w=Math.max(...L.map(s=>cx.measureText(s).width))+24;cx.fillStyle='rgba(10,12,16,.78)';cx.fillRect(1010-w,14,w,56);cx.fillStyle='#fff';L.forEach((s,i)=>cx.fillText(s,1010-w+12,38+i*22))}
+ const u=new Set(ms.flatMap(m=>[...m.u]));const h=[...u].filter(x=>!/^\d+$/.test(x)).length;
+ const tl=(l,v,c,w)=>'<div class="tile'+(w?' w':'')+'"><span>'+l+'</span><b'+(c?' style="color:'+c+'"':'')+'>'+v+'</b></div>';$('sum').innerHTML=tl('Matches',ms.length)+tl('Humans',h,'#39ff14')+tl('Bots',u.size-h,'#ff4fd8')+tl('Loot',n.loot,'#facc15')+tl('Kills',n.kill,'#ef4444')+tl('Deaths',n.death)+tl('Storm deaths',n.storm,'#a855f7')+tl('Bot path samples',rows.filter(r=>r.bot&&r.k==='pos').length,'#ff4fd8',1);
+ const s=Math.floor(T/1000);$('tl').textContent=one?`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`:'—'}
+function tick(t){if(!playing)return;const m=M.get($('fx').value);T+=(t-last)*$('sp').value;last=t;
+ if(T>=m.t1){T=m.t1;playing=false;$('pl').textContent='▶ Play'}$('sl').value=T;render();if(playing)requestAnimationFrame(tick)}
+const CAP={};if(window.claude&&claude.use){claude.use('sample').then(s=>CAP.s=s).catch(()=>0);claude.use('downloads').then(d=>CAP.d=d).catch(()=>0)}
+const med=a=>a.length?[...a].sort((x,y)=>x-y)[a.length>>1]:0,pc=(a,b)=>b?Math.round(a/b*100):0;
+function km(P,k){if(!P.length||P.length<k)return[];const C=[P[0].slice()];while(C.length<k){let b=P[0],bd=-1;for(const p of P){const d=Math.min(...C.map(c=>(p[0]-c[0])**2+(p[1]-c[1])**2));if(d>bd){bd=d;b=p}}C.push(b.slice())}
+ let Lb=[];for(let it=0;it<20;it++){Lb=P.map(p=>{let b=0,bd=1/0;C.forEach((c,i)=>{const d=(p[0]-c[0])**2+(p[1]-c[1])**2;if(d<bd){bd=d;b=i}});return b});C.forEach((c,i)=>{const m=P.filter((_,j)=>Lb[j]===i);if(m.length){c[0]=m.reduce((s,p)=>s+p[0],0)/m.length;c[1]=m.reduce((s,p)=>s+p[1],0)/m.length}})}
+ return C.map((c,i)=>({c,n:Lb.filter(l=>l===i).length})).sort((a,b)=>b.n-a.n)}
+function analyze(){const ms=cur();if(!ms.length||!ms[0])return null;const map=ms[0].map,sc=CFG[map].s/1024,G=8;
+ const cell=r=>Math.min(G-1,Math.floor(r.Y/1024*G))*G+Math.min(G-1,Math.floor(r.X/1024*G)),g=()=>new Array(G*G).fill(0),T=g(),Cb=g(),S=g(),L=g();
+ const lab=i=>'ABCDEFGH'[i%G]+(Math.floor(i/G)+1),reg=i=>{const x=i%G,y=Math.floor(i/G);return[y<3?'north':y>4?'south':'',x<3?'west':x>4?'east':''].filter(Boolean).join('-')||'centre'};
+ const top=(a,n=3)=>a.map((v,i)=>[lab(i)+' ('+reg(i)+')',v]).filter(x=>x[1]>0).sort((x,y)=>y[1]-x[1]).slice(0,n);
+ const H=new Set(),B=new Set(),ev={},P=[],dur=[],first=[],dT=[],dist=[],th=[0,0,0];let early=0,deaths=0,hum=0,noLoot=0;
+ for(const m of ms){dur.push(m.t1/1000);let f=1/0;const lootU=new Set();
+  for(const r of m.rows){(r.bot?B:H).add(r.u);if(r.k==='pos'){T[cell(r)]++;continue}if(r.bot)continue;ev[r.e]=(ev[r.e]||0)+1;
+   if(r.k==='loot'){L[cell(r)]++;lootU.add(r.u);continue}
+   Cb[cell(r)]++;P.push([r.X,r.Y]);f=Math.min(f,r.t);th[Math.min(2,Math.floor(r.t/(m.t1||1)*3))]++;
+   if(r.k==='death'||r.k==='storm'){deaths++;dT.push(r.t/1000);if(r.t<60000)early++;if(r.k==='storm')S[cell(r)]++}}
+  if(f<1/0)first.push(f/1000);
+  for(const[u,p]of m.paths){if(p.bot)continue;hum++;let d=0;for(let i=1;i<p.pts.length;i++)d+=Math.hypot(p.pts[i].X-p.pts[i-1].X,p.pts[i].Y-p.pts[i-1].Y);dist.push(d*sc);if(!lootU.has(u))noLoot++}}
+ const walk=T.map((v,i)=>[i,v]).filter(x=>x[1]>0),mt=med(walk.map(x=>x[1])),dead=walk.filter(x=>x[1]<.1*mt).map(x=>lab(x[0])+' ('+reg(x[0])+')');
+ const st=P.length>3000?P.filter((_,i)=>i%Math.ceil(P.length/3000)===0):P,kc=km(st,Math.min(4,st.length)),cl=kc.map(o=>{const i=Math.min(G-1,Math.floor(o.c[1]/1024*G))*G+Math.min(G-1,Math.floor(o.c[0]/1024*G));return[lab(i)+' ('+reg(i)+')',pc(o.n,st.length)]});
+ GR={T,Cb,L,S,kc,low:walk.filter(x=>x[1]<.1*mt).map(x=>x[0]),map};return{map,scope:($('fx').value?'1 match':'')||($('fd').value||'all dates'),matches:ms.length,humans:H.size,bots:B.size,ev,nCombat:P.length,medDur:Math.round(med(dur)),medFirstCombat:Math.round(med(first)),medDeathTime:Math.round(med(dT)),earlyDeathPct:pc(early,deaths),deaths,
+  stormPctOfDeaths:pc(ev.KilledByStorm||0,deaths),combatByThirdPct:th.map(v=>pc(v,P.length)),noLootPct:pc(noLoot,hum),humanJourneys:hum,avgDistance:Math.round(dist.reduce((a,b)=>a+b,0)/(dist.length||1)),
+  combatCells:top(Cb),trafficCells:top(T),lootCells:top(L),stormCells:top(S),hotspots:cl,lowTrafficCells:dead.length,visitedCells:walk.length,lowTrafficList:dead.slice(0,6)}}
+function txt(A){const e=A.ev,n=k=>e[k]||0,o=[],ci=(t,x)=>o.push('['+t+'] '+x);
+ const botFights=pc(n('BotKill')+n('BotKilled'),n('Kill')+n('Killed')+n('BotKill')+n('BotKilled'));
+ o.push('LILA BLACK - PLAYER BEHAVIOUR INSIGHTS','Map: '+A.map+' | Scope: '+A.scope+' | Matches: '+A.matches+' | Players: '+A.humans+' humans, '+A.bots+' bots','Generated '+new Date().toISOString().slice(0,10)+'. Method: 8x8 grid analysis, k-means hotspot clustering, rule-based heuristics.'+(A.matches<20?' Small sample: treat as directional.':''),'',
+ 'KEY NUMBERS (human players only)','- Human kills of humans '+n('Kill')+', killed by humans '+n('Killed')+', bot kills '+n('BotKill')+', killed by bots '+n('BotKilled')+', storm deaths '+n('KilledByStorm')+', loot pickups '+n('Loot'),
+ '- Median match length '+A.medDur+' s; median time to first combat '+A.medFirstCombat+' s; median time of death '+A.medDeathTime+' s','- Deaths in first 60 s: '+A.earlyDeathPct+'%; storm share of deaths: '+A.stormPctOfDeaths+'%','- Combat by match third (early/mid/late): '+A.combatByThirdPct.join('% / ')+'%','- Avg distance per human journey: '+A.avgDistance+' world units; journeys with no loot: '+A.noLootPct+'%','',
+ 'WHERE THINGS HAPPEN','- Combat hotspots (k-means): '+(A.hotspots.map(h=>h[0]+' '+h[1]+'%').join('; ')||'n/a'),'- Busiest combat cells: '+A.combatCells.map(c=>c[0]+' '+c[1]).join('; '),'- Most travelled cells: '+A.trafficCells.map(c=>c[0]+' '+c[1]).join('; '),'- Top loot cells: '+(A.lootCells.map(c=>c[0]+' '+c[1]).join('; ')||'none'),'- Storm death cells: '+(A.stormCells.map(c=>c[0]+' '+c[1]).join('; ')||'none'),
+ '- Under-used areas: '+A.lowTrafficCells+' of '+A.visitedCells+' visited cells get under 10% of median traffic'+(A.lowTrafficList.length?' (e.g. '+A.lowTrafficList.join(', ')+')':''),'','INSIGHTS AND RECOMMENDATIONS (heuristic, validate with A/B tests)');
+ const h0=A.hotspots[0];
+ if(h0)ci('Level design',h0[1]>=35?'Combat is concentrated: '+h0[1]+'% of events cluster around '+h0[0]+'. Check sightlines, cover and loot density there; consider a second reason to fight elsewhere to spread engagements.':'Combat is spread across several clusters (largest '+h0[0]+', '+h0[1]+'%), a healthy sign for map use. Compare these clusters to intended points of interest.');
+ if(A.lowTrafficCells>2)ci('Level design','About '+pc(A.lowTrafficCells,A.visitedCells)+'% of visited cells are rarely crossed. Add loot, objectives or extraction routes there, or shorten paths to them.');
+ if(A.earlyDeathPct>=25)ci('Player experience',A.earlyDeathPct+'% of deaths happen in the first 60 s. Review spawn spacing and early-loot access; this is a common churn risk for new players.');
+ if(A.stormPctOfDeaths>=15)ci('Player experience','Storm causes '+A.stormPctOfDeaths+'% of deaths'+(A.stormCells[0]?', mostly near '+A.stormCells[0][0]:'')+'. Improve storm warnings and route clarity, or check whether slow-to-exit areas trap players.');
+ if(!(n('Kill')+n('Killed')+n('BotKill')+n('BotKilled')));else if(botFights>=70)ci('Targeting',botFights+'% of fights are against bots, so human-vs-human contact is rare here. Test lower bot fill, or matchmaking that keeps humans closer together.');
+ else if(botFights<=30)ci('Targeting','Only '+botFights+'% of fights involve bots; bots may be too passive. Test bot aggression so new players get safe early practice.');
+ if(A.noLootPct>=20)ci('Monetization',A.noLootPct+'% of human journeys picked up no loot. Players who never engage with items are poor candidates for item or boost offers; try onboarding nudges first.');
+ if(A.lootCells[0])ci('Monetization','Loot concentrates near '+A.lootCells[0][0]+'. Consider that region for cosmetic or limited-time item showcases, and measure whether it raises traffic or deaths.');
+ ci('Targeting','Segment humans by early death, no loot and short journeys; these are the first-session players to target with tutorials, easier lobbies or comeback rewards.');
+ return o.join('\n')}
+let GR=null,PN=[];const PCAP={combat:'Combat hotspots (rings = k-means clusters, numbers = events in top cells)',traffic:'Traffic density (green); dashed pink = under-used cells',loot:'Loot pickups per cell',storm:'Storm deaths per cell'};
+function panel(kind){const S=768,G=8,s=S/G,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');x.drawImage(IMG[GR.map],0,0,S,S);x.fillStyle='rgba(0,0,0,.4)';x.fillRect(0,0,S,S);
+ const a={combat:GR.Cb,traffic:GR.T,loot:GR.L,storm:GR.S}[kind],col={combat:'239,68,68',traffic:'57,255,20',loot:'250,204,21',storm:'168,85,247'}[kind],mx=Math.max(...a,1);
+ a.forEach((v,i)=>{if(v){x.fillStyle='rgba('+col+','+(.12+.6*v/mx)+')';x.fillRect(i%G*s,Math.floor(i/G)*s,s,s)}});
+ x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=1;for(let i=0;i<=G;i++){x.beginPath();x.moveTo(i*s,0);x.lineTo(i*s,S);x.moveTo(0,i*s);x.lineTo(S,i*s);x.stroke()}
+ x.font='bold 14px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';for(let i=0;i<G;i++){x.fillText('ABCDEFGH'[i],i*s+s/2,10);x.fillText(String(i+1),10,i*s+s/2)}
+ if(kind==='traffic'){x.setLineDash([6,4]);x.strokeStyle='#ff4fd8';x.lineWidth=3;for(const i of GR.low)x.strokeRect(i%G*s+4,Math.floor(i/G)*s+4,s-8,s-8);x.setLineDash([])}
+ const tp=a.map((v,i)=>[i,v]).filter(q=>q[1]>0).sort((p,q)=>q[1]-p[1]).slice(0,3);x.font='bold 22px sans-serif';x.lineWidth=4;
+ for(const[i,v]of tp){const px=i%G*s+s/2,py=Math.floor(i/G)*s+s/2;x.strokeStyle='#000';x.strokeText(String(v),px,py);x.fillStyle='#fff';x.fillText(String(v),px,py)}
+ if(kind==='combat'){const tot=Math.max(1,GR.kc.reduce((t,q)=>t+q.n,0));GR.kc.forEach((o,k)=>{const px=o.c[0]*S/1024,py=o.c[1]*S/1024;x.beginPath();x.arc(px,py,18+60*o.n/tot,0,7);x.lineWidth=4;x.strokeStyle='#fff';x.stroke();x.fillStyle='rgba(0,0,0,.75)';x.beginPath();x.arc(px,py,11,0,7);x.fill();x.fillStyle='#fff';x.font='bold 14px sans-serif';x.fillText(String(k+1),px,py)})}
+ return c.toDataURL('image/jpeg',.85)}
+let A0=null,ai='';const full=()=>txt(A0)+(ai?'\n\n'+(ai.startsWith('OFFLINE')?'AUTOMATED INSIGHTS (rule-based, not an AI model)':'AI INSIGHTS (written by Claude from the numbers above)')+'\n'+ai:''),show=()=>{$('rt').textContent=full()},asc=s=>s.replace(/[^\x00-\x7F]/g,c=>({'\u00b7':'-','\u2014':'-','\u2013':'-','\u2019':"'",'\u201c':'"','\u201d':'"','\u2022':'-','\u00d7':'x'}[c]||'?'));
+const cor=(a,b)=>{const n=a.length,ma=a.reduce((s,v)=>s+v,0)/n,mb=b.reduce((s,v)=>s+v,0)/n;let p=0,x=0,y=0;for(let i=0;i<n;i++){p+=(a[i]-ma)*(b[i]-mb);x+=(a[i]-ma)**2;y+=(b[i]-mb)**2}return x&&y?p/Math.sqrt(x*y):0};
+const cl2=i=>{const x=i%8,y=Math.floor(i/8);return 'ABCDEFGH'[x]+(y+1)+' ('+([y<3?'north':y>4?'south':'',x<3?'west':x>4?'east':''].filter(Boolean).join('-')||'centre')+')'};
+function ins3(A){const e=A.ev,n=k=>e[k]||0,G=GR,C=[],Cb=G.Cb,T=G.T,L=G.L,tot=Cb.reduce((a,b)=>a+b,0),sT=T.reduce((a,b)=>a+b,0),h0=A.hotspots[0],vis=T.map((v,i)=>i).filter(i=>T[i]>0);
+ const fights=n('Kill')+n('Killed')+n('BotKill')+n('BotKilled'),botF=pc(n('BotKill')+n('BotKilled'),fights),lc=A.lootCells.map(c=>c[0]+' '+c[1]).join('; '),cc=A.combatCells.map(c=>c[0]+' '+c[1]).join('; ');
+ if(h0&&tot>=5){const t3=[...Cb].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b,0),oth=A.hotspots.slice(1).map(h=>h[0]).join(', ');
+  C.push({s:h0[1]/35,t:'Combat concentrates around '+h0[0],c:'About '+h0[1]+'% of human combat events cluster around '+h0[0]+'; the busiest single cell is '+A.combatCells[0][0]+' with '+A.combatCells[0][1]+' events.',
+  e:'k-means (k=4) on '+tot+' combat events gives clusters '+A.hotspots.map(h=>h[0]+' '+h[1]+'%').join('; ')+'. The three busiest cells hold '+pc(t3,tot)+'% of all combat.',
+  m:['Share of combat in the top hotspot','Combat events per cell','Median time to first combat','Deaths per match'],
+  a:['Review sightlines, cover and approach routes in and around '+h0[0],'Playtest moving cover or loot to pull fights toward '+(oth||'other areas'),'Re-run this report after the change and compare the hotspot share'],
+  w:'Designers decide where the map invites fights. One dominant zone can leave other areas unused and give players the same predictable fight every match.'})}
+ if(vis.length>=6&&tot>=5){const R=tot/sT,pass=[...vis].sort((a,b)=>T[b]-T[a]).slice(0,5).filter(i=>Cb[i]/T[i]<.5*R).slice(0,3);
+  if(pass.length)C.push({s:.9+pass.length*.05,t:'Busy routes see little fighting',c:cl2(pass[0])+' is among the most-travelled cells ('+T[pass[0]]+' position samples) but has only '+Cb[pass[0]]+' combat events.',
+  e:pass.map(i=>cl2(i)+': '+T[i]+' samples, '+Cb[i]+' combat events ('+(Cb[i]/T[i]*100).toFixed(1)+' per 100 samples)').join('; ')+'. Map average: '+(R*100).toFixed(1)+' per 100 samples. Traffic counts bots and humans; combat counts humans only.',
+  m:['Combat events per 100 traffic samples','Time spent crossing the zone','Loot pickups in the zone'],
+  a:['Decide whether these cells are intended safe routes or dead pacing','If dead pacing, add a reason to stop: loot, an objective or a cover pocket','If intended, protect them from turning into new hotspots'],
+  w:'High-traffic corridors set the pace and flow of a match. Knowing whether players cross them safely or fight there shows whether the route works as designed.'})}
+ if(A.visitedCells>=6&&A.lowTrafficCells>0){const mt=med(vis.map(i=>T[i]));
+  C.push({s:pc(A.lowTrafficCells,A.visitedCells)/10,t:'Parts of the map are rarely visited',c:A.lowTrafficCells+' of '+A.visitedCells+' visited cells have under 10% of the median traffic'+(A.lowTrafficList.length?' (e.g. '+A.lowTrafficList.join(', ')+')':'')+'.',
+  e:'The median visited cell has '+mt+' position samples; the cells listed have under '+Math.max(1,Math.round(mt*.1))+'. That is '+pc(A.lowTrafficCells,A.visitedCells)+'% of visited cells.',
+  m:['Map coverage (share of cells in regular use)','Loot pickups in these cells','Combat events in these cells'],
+  a:['Add loot, an objective or a safer route into these cells','Check whether terrain, walls or the storm path block access','Re-measure coverage after the change'],
+  w:'Unused space costs build effort without giving players anything; coverage is the clearest sign a zone is not pulling its weight.'})}
+ if(A.deaths>=5)C.push({s:A.earlyDeathPct/25,t:A.earlyDeathPct>=25?'Many players die very early':'Deaths come later in the match',c:A.earlyDeathPct+'% of deaths happen in the first 60 s; the median time to first combat is '+A.medFirstCombat+' s in a match with a median length of '+A.medDur+' s.',
+  e:A.deaths+' deaths in the selection. Combat by match third (early/mid/late): '+A.combatByThirdPct.join('% / ')+'%.',
+  m:['Deaths in the first 60 s','Median time to first combat','Early-session retention (needs retention data, which this dataset lacks)'],
+  a:['Check spawn spacing and distance to the nearest fight','Make early loot easy to reach so players are armed before contact','Review the first-minute routes of players who die early'],
+  w:'Early deaths come from spawn and early-route layout, which designers control, and they are a classic source of first-session frustration.'});
+ if(A.deaths>=5&&n('KilledByStorm')>0)C.push({s:A.stormPctOfDeaths/15,t:'The storm is a real cause of death',c:A.stormPctOfDeaths+'% of deaths ('+n('KilledByStorm')+' of '+A.deaths+') come from the storm.',
+  e:A.stormCells.length?'Most storm deaths are in '+A.stormCells.map(c=>c[0]+' '+c[1]).join('; ')+'.':'No cell stands out.',
+  m:['Storm deaths per match','Share of deaths from the storm','Extraction rate'],
+  a:['Check exit routes from the storm-death cells for chokepoints or dead ends','Improve visual cues and warning time for the storm edge','Re-measure storm share after route changes'],
+  w:'Storm deaths often mean players got trapped by geometry, not that they played badly. That is a layout problem designers can fix.'});
+ if(vis.length>=8&&L.some(v=>v>0)){const r=cor(vis.map(i=>L[i]),vis.map(i=>Cb[i]));
+  C.push({s:Math.abs(r)*1.2,t:r>=.4?'Fights follow the loot':r<=.1?'Loot and fights are decoupled':'Loot and fights partly overlap',c:'Across visited cells, loot pickups and combat events per cell correlate at r = '+r.toFixed(2)+'.',
+  e:'Top loot cells: '+(lc||'none')+'. Top combat cells: '+cc+'. Correlation computed over '+vis.length+' visited cells.',
+  m:['Loot pickups per cell','Combat events per cell','Time to first loot'],
+  a:r>=.4?['Treat high-loot cells as hotspots: add cover and escape routes','Move some high-value loot to quieter cells to spread fights']:['Check loot is placed where you want players to go','Test moving valuable loot into under-used cells to pull traffic'],
+  w:'Loot placement is one of the strongest levers a designer has over where players go and where they fight.'})}
+ if(fights>=5&&(botF>=70||botF<=30))C.push({s:Math.abs(botF-50)/40,t:botF>=70?'Most fights are against bots':'Most fights are human against human',c:botF+'% of fights involve bots.',
+  e:'Kill '+n('Kill')+', Killed '+n('Killed')+', BotKill '+n('BotKill')+', BotKilled '+n('BotKilled')+'.',
+  m:['Share of fights against bots','Human-vs-human encounters per match','Deaths per match'],
+  a:botF>=70?['Check whether bots fill the zones humans would otherwise meet in','Test lower bot fill or placing bots away from main routes']:['Check bots are active enough to give new players safe practice','Test bot placement near early loot'],
+  w:'Where bots patrol shapes the fights a map produces, so bot routes are part of level design.'});
+ const mx=Math.max(...A.combatByThirdPct);if(tot>=10&&mx>=50)C.push({s:mx/60,t:'Combat is '+['front-loaded','mid-match','back-loaded'][A.combatByThirdPct.indexOf(mx)],c:mx+'% of combat events happen in the '+['first','middle','last'][A.combatByThirdPct.indexOf(mx)]+' third of matches.',
+  e:'Early/mid/late split: '+A.combatByThirdPct.join('% / ')+'% of '+tot+' combat events.',m:['Combat events per match third','Median time to first combat','Match length'],
+  a:['Check whether the pacing matches the intended arc (loot, then fights, then storm pressure)','Adjust loot density or storm timing to move fights earlier or later'],w:'The timing of fights is shaped by map size, loot spread and storm speed, all of which are design levers.'});
+ return C}
+function mdFull(){const A=A0,I=ins3(A).sort((a,b)=>b.s-a.s).slice(0,3),ln=txt(A).split('\n'),o=['# LILA BLACK - Player behaviour insights','',ln[1],'',ln[2],'','## Three things we learned from the data',''];
+ if(!I.length)o.push('There is not enough data in this selection to ground three insights. Load more matches.','');
+ I.forEach((x,i)=>o.push('### '+(i+1)+'. '+x.t,'','- **What caught the eye in the data:** '+x.c,'- **Evidence:** '+x.e,'- **Actionable:** Yes','  - **Metrics affected:** '+x.m.join('; '),'  - **Action items:**',...x.a.map((a,j)=>'    '+(j+1)+'. '+a),'- **Why a level designer should care:** '+x.w,''));
+ const rest=ln.slice(4).join('\n').replace(/^KEY NUMBERS.*$/m,'## Key numbers (human players only)\n').replace(/^WHERE THINGS HAPPEN$/m,'## Where things happen\n').replace(/^INSIGHTS AND RECOMMENDATIONS.*$/m,'## Heuristic recommendations (validate with A/B tests)\n').replace(/^\[([^\]]+)\] (.*)$/gm,'- **$1:** $2');
+ o.push(rest);if(ai)o.push('',ai.startsWith('OFFLINE')?'## Automated insights (rule-based, not an AI model)':'## AI-written insights (Claude, from the numbers above)','',ai);o.push('','_Annotated minimap panels for these numbers are included in the PDF export._');return o.join('\n')}
+
+function offline(A){const I=ins3(A).sort((a,b)=>b.s-a.s),cat=t=>/^(Combat concentrates|Busy routes|Parts of the map|Fights follow|Loot and fights)/.test(t)?0:/^(Many players|Deaths come|The storm|Combat is)/.test(t)?1:2,
+ H=['LEVEL DESIGN','PLAYER EXPERIENCE','PLAYER TARGETING AND RETENTION','MONETIZATION'],B=H.map(()=>[]),ln=x=>'- '+x.t+': '+x.c+' Evidence: '+x.e+' Do: '+x.a.slice(0,2).join('; ')+'. Watch: '+x.m.slice(0,3).join(', ')+'.';
+ I.forEach(x=>B[cat(x.t)].push(ln(x)));
+ B[2].push('- Segments to target: of '+A.humanJourneys+' human journeys, '+A.noLootPct+'% picked up no loot, and '+A.earlyDeathPct+'% of deaths came in the first 60 s. Test onboarding help, easier lobbies or comeback rewards on these players and compare early-session outcomes.');
+ if(A.lootCells[0])B[3].push('- Hypothesis: loot concentrates near '+A.lootCells[0][0]+' ('+A.lootCells[0][1]+' pickups), so that area is where item or cosmetic showcases would be seen most. Test it and watch traffic and deaths there. This dataset has no purchase data, so revenue effects cannot be measured here.');
+ B[3].push('- Players with no loot pickups are poor candidates for item offers; start with onboarding nudges, then test offers on players who already loot ('+(100-A.noLootPct)+'% of journeys).');
+ const o=['OFFLINE ANALYST MODE: written by built-in rules from the numbers above, not by an AI model.',''];
+ H.forEach((h,i)=>{o.push(h);o.push(...(B[i].length?B[i]:['- Nothing in this selection stands out.']));o.push('')});
+ o.push('Sample: '+A.matches+' match(es), '+A.humanJourneys+' human journeys. Treat these as hypotheses to validate with A/B tests.');return o.join('\n')}
+
+$('bi').onclick=()=>{A0=analyze();if(!A0){alert('Load data and pick a map first.');return}ai='';show();PN=['combat','traffic','loot','storm'].map(k=>[k,panel(k)]);$('rv').innerHTML=PN.map(([k,u])=>'<figure><img src="'+u+'" alt="'+k+'"><figcaption>'+PCAP[k]+'</figcaption></figure>').join('');$('rn').textContent='';$('ra').style.display='';$('rtx').style.display=$('rpd').style.display='';$('rp').classList.add('on')};
+$('rx').onclick=()=>$('rp').classList.remove('on');
+$('ra').onclick=async()=>{if(!CAP.s&&window.claude&&claude.use)try{CAP.s=await claude.use('sample')}catch(e){}if(!CAP.s){ai=offline(A0);show();$('rn').textContent='AI is not available in this view, so automated rule-based insights were added instead.';return}const b=$('ra');b.disabled=true;$('rn').textContent='Asking Claude...';
+ const p='You are a game analytics lead advising the product team of LILA BLACK, an extraction shooter with humans, bots and a shrinking storm. Using ONLY the metrics JSON below, write 8 to 10 insights. Group them under these headings: LEVEL DESIGN, PLAYER EXPERIENCE, PLAYER TARGETING AND RETENTION, MONETIZATION. For each: the finding with the numbers that support it, why it matters, and one concrete change or experiment with the KPI to watch. Name map cells (like C4) and regions. Say when the sample is too small to be sure. Plain text only: no markdown symbols, no tables.\n\nMetrics: '+JSON.stringify(A0);
+ try{const r=await CAP.s(p,{onText:({text})=>{ai=text;show()}});ai=r.text;show();$('rn').textContent='AI section added.'}catch(e){ai=offline(A0);show();$('rn').textContent=(e.code==='not_granted'?'AI insights were not permitted':'AI insights failed ('+(e.message||e.code)+')')+', so automated rule-based insights were added instead.'}b.disabled=false};
+const fb=(n,d,why)=>{const b=d instanceof Blob?d:new Blob([d],{type:n.endsWith('.pdf')?'application/pdf':'text/plain'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;a.style.display='none';document.body.appendChild(a);a.click();a.remove();$('rn').innerHTML=why+' Trying a direct download of '+n+'. If nothing saves, <a href="'+u+'" target="_blank" rel="noopener" style="color:var(--a)">open it in a new tab</a> and save it from there.'};
+const dl=async(n,d)=>{if(!CAP.d&&window.claude&&claude.use)try{CAP.d=await claude.use('downloads')}catch(e){}if(!CAP.d){fb(n,d,'Built-in saving is not available in this view.');return}try{await CAP.d.save({filename:n,data:d.slice(0)});$('rn').textContent='Saved '+n}catch(e){if(e.code==='declined')$('rn').textContent='Download cancelled.';else fb(n,d,'Saving failed ('+(e.message||e.code)+').')}};
+$('rtx').onclick=()=>dl('insights.md',mdFull());
+$('rpd').onclick=()=>{const J=window.jspdf&&window.jspdf.jsPDF;if(!J){$('rn').textContent='PDF library did not load; use .txt.';return}const d=new J({unit:'pt',format:'a4'}),W=d.internal.pageSize.getWidth()-80,Hh=d.internal.pageSize.getHeight()-50;let y=50;d.setFontSize(9.5);
+ for(const raw of asc(full()).split('\n')){const hd=/^[A-Z][A-Z &]{5,}/.test(raw),big=raw.startsWith('LILA BLACK');d.setFont('helvetica',hd?'bold':'normal');d.setFontSize(big?14:hd?10.5:9.5);if(hd&&y>50)y+=6;for(const l of d.splitTextToSize(raw||' ',W)){if(y>Hh){d.addPage();y=50}d.text(l,40,y);y+=hd?15:12.5}}d.addPage();y=50;d.setFont('helvetica','bold');d.setFontSize(12);d.text('MAP VISUALS - '+A0.map,40,y);y+=16;const iw=(W-12)/2;PN.forEach(([k,u],i)=>{const cx=40+(i%2)*(iw+12),cy=y+Math.floor(i/2)*(iw+34);d.addImage(u,'JPEG',cx,cy,iw,iw);d.setFont('helvetica','normal');d.setFontSize(8.5);d.text(d.splitTextToSize(PCAP[k],iw),cx,cy+iw+11)});d.setFontSize(8.5);d.text(d.splitTextToSize('Grid: columns A-H run west to east, rows 1-8 run north to south. White numbers mark the three busiest cells in each panel.',W),40,y+2*(iw+34)+4);
+dl('insights-'+A0.map+'.pdf',d.output('arraybuffer'))};
+
+$('pl').onclick=()=>{const m=M.get($('fx').value);if(!m)return;if(!playing&&T>=m.t1)T=0;playing=!playing;$('pl').textContent=playing?'❚❚ Pause':'▶ Play';last=performance.now();if(playing)requestAnimationFrame(tick)};
+$('sl').oninput=e=>{T=+e.target.value;render()};
+$('bf').onclick=()=>$('fi').click();$('bd').onclick=()=>$('di').click();
+for(const i of['fi','di'])$(i).onchange=e=>load([...e.target.files]);
+$('fm').onchange=()=>{$('fd').value='';fill()};$('fd').onchange=fill;$('fx').onchange=()=>{T=1/0;sync()};
+document.querySelectorAll('input[type=checkbox],#hm,#fp').forEach(e=>e.onchange=render);
+</script></body></html>
