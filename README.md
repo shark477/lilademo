@@ -2,10 +2,9 @@
 
 A browser tool for Level Designers to explore where players and bots move, fight, loot and die on the three LILA BLACK maps. Load the match parquet files, pick a map, date and match, then watch the match play back or inspect heatmaps.
 
-*Github Hosted site: https://shark477.github.io/lilademo/
+*Demo site: https://shark477.github.io/lilademo/
 
-**Live (hosted) link for AI Insights:** https://claude.ai/artifact/9kZsTYSUYBp18gZqzomqF1
-The page is private to its owner until shared from the artifact's Share menu.
+**Live (hosted) link for AI Insights:** The page is private to its owner until shared from the artifact's Share menu. The link is not shareable due to account limitations, although PDF's have been provided for insights.
 
 ## Features
 - Player journeys on the correct minimap (world to minimap mapping, see `ARCHITECTURE.md`)
