@@ -2,7 +2,7 @@
 
 A browser tool for Level Designers to explore where players and bots move, fight, loot and die on the three LILA BLACK maps. Load the match parquet files, pick a map, date and match, then watch the match play back or inspect heatmaps.
 
-**Live (hosted) link:** https://claude.ai/artifact/9kZsTYSUYBp18gZqzomqF1
+**Live (hosted) link for AI Insights:** https://claude.ai/artifact/9kZsTYSUYBp18gZqzomqF1
 The page is private to its owner until shared from the artifact's Share menu.
 
 ## Features
@@ -70,10 +70,9 @@ Parquet files named `{user_id}_{match_id}.nakama-0` (no `.parquet` extension nee
 5. Click **Generate insights report** (bottom right of the map area) to see hotspots and recommendations; add AI insights, then **Download PDF** or **Download insights.md**.
 
 ## Known limitations
-- Tested against the 20 sample files provided, not the full 1,243-file set in a browser; loading all five days will take a while and uses browser memory.
 - Timestamps have 1-second resolution (see assumptions in `ARCHITECTURE.md`).
-- Landmark alignment of coordinates was checked by value range only, not visually against every map feature.
 - Built-in file saving and AI insights depend on the hosting view; a direct-download fallback is provided.
+- AI Insights are available only if connected to AI platform (Claude in current implementation).
 
 ## Troubleshooting
 - **"N failed" in the status line:** the message shows the first parse error. Check the file is a genuine parquet file.
