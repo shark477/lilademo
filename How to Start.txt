@@ -1,0 +1,6 @@
+1. Open the link: https://shark477.github.io/lilademo/ [or locally u can run index.html]
+2. Upload the folder with parquet data.
+3. Use settings for visualizing the different insights.
+4. Timelapse is available only for signle match so select a match to see the insights.
+5. Click generate insights for Machine Learning based insights.
+6. AI insights are possible but right now the link is not shareable due to free version of software. I have already provided AI insights for the three play regions.
