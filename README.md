@@ -35,7 +35,7 @@ build.py              Rebuilds index.html from the template and the three minima
 ARCHITECTURE.md       Design, data flow, coordinate mapping, assumptions, tradeoffs
 ```
 
-## Setup
+## Alternative Setup
 **Use the hosted page:** open the link above, click **Add folder** (choose the `player_data` folder, or a single day folder) or **Add files**, then pick a map.
 
 **Run locally:**
